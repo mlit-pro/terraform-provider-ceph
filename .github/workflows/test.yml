@@ -1,15 +1,23 @@
 # Terraform Provider testing workflow.
 name: Tests
 
-# This GitHub action runs your tests for each pull request and push.
-# Optionally, you can turn it on using a schedule for regular testing.
+# This GitHub action runs your tests for each pull request, and for pushes to
+# the default branch. Scoping push to master avoids duplicate runs: a push to a
+# branch with an open PR would otherwise trigger both push and pull_request.
 on:
   pull_request:
     paths-ignore:
       - 'README.md'
   push:
+    branches:
+      - master
     paths-ignore:
       - 'README.md'
+
+# Cancel superseded in-progress runs for the same PR or branch.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.head_ref || github.ref }}
+  cancel-in-progress: true
 
 # Testing only needs permissions to read the repository contents.
 permissions:
