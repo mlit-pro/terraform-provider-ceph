@@ -27,6 +27,9 @@ website/node_modules
 
 website/vendor
 
+.env
+tmp/
+
 # Test exclusions
 !command/test-fixtures/**/*.tfstate
 !command/test-fixtures/**/.terraform/
