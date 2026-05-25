@@ -1,1 +1,0 @@
-terraform import ceph_example.test "id-123"

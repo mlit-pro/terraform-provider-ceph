@@ -105,3 +105,29 @@ func (c *Client) Do(req *http.Request, apiVersion string) (*http.Response, error
 	req.Header.Set("Accept", fmt.Sprintf("application/vnd.ceph.api.%s+json", apiVersion))
 	return c.http.Do(req)
 }
+
+// getJSON performs a GET against path at the given API version and decodes a 200
+// response body into out.
+func (c *Client) getJSON(ctx context.Context, path, apiVersion string, out any) error {
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.endpoint+path, nil)
+	if err != nil {
+		return fmt.Errorf("building request for %s: %w", path, err)
+	}
+
+	resp, err := c.Do(req, apiVersion)
+	if err != nil {
+		return fmt.Errorf("sending request to %s%s: %w", c.endpoint, path, err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode != http.StatusOK {
+		snippet, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+		return fmt.Errorf("request to %s failed: %s: %s", path, resp.Status, strings.TrimSpace(string(snippet)))
+	}
+
+	if err := json.NewDecoder(resp.Body).Decode(out); err != nil {
+		return fmt.Errorf("decoding response from %s: %w", path, err)
+	}
+
+	return nil
+}

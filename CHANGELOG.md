@@ -14,10 +14,18 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - Provider configuration (`endpoint`, `username`, `password`, `ca_cert`, `insecure`) with
   `CEPH_*` environment-variable fallbacks, and a minimal Ceph Manager Dashboard API client
   handling TLS and JWT authentication.
+- `ceph_health` data source exposing the cluster's overall health status.
+- `ceph_cluster_fsid` data source exposing the cluster's FSID.
+- `ceph_cluster_capacity` data source exposing the cluster's raw capacity
+  (total, available, and used bytes).
 
 ### Changed
 
 - CI now runs unit tests on every pull request; acceptance tests moved to a manually-dispatched
   `Acceptance Tests` workflow since they require a live Ceph cluster.
+
+### Removed
+
+- The scaffolding example resource and data source.
 
 [unreleased]: https://github.com/mlit-pro/terraform-provider-ceph/commits/master
