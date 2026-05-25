@@ -16,6 +16,19 @@ permissions:
   contents: read
 
 jobs:
+  changelog:
+    name: Changelog
+    runs-on: ubuntu-latest
+    if: ${{ github.event_name == 'pull_request' && !endsWith(github.actor, '[bot]') }}
+    permissions:
+      contents: read
+      pull-requests: read
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+      - uses: dangoslen/changelog-enforcer@8b5e9dc3121363bb7c0115f8533404d92af382de # v3.7.0
+        with:
+          changeLogPath: CHANGELOG.md
+
   # Ensure project builds before running testing matrix
   build:
     name: Build
