@@ -38,7 +38,7 @@ output "rbd_keyring" {
 ### Read-Only
 
 - `key` (String, Sensitive) CephX secret key for the entity.
-- `keyring` (String, Sensitive) Full keyring text for the entity, suitable for writing to a keyring file.
+- `keyring` (String, Sensitive) Full keyring text for the entity, suitable for writing to a keyring file. Includes the capability lines, so it changes when capabilities change.
 
 ## Import
 

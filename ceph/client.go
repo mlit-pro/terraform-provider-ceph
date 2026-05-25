@@ -108,7 +108,10 @@ func (c *Client) Do(req *http.Request, apiVersion string) (*http.Response, error
 }
 
 // getJSON performs a GET against path at the given API version and decodes a 200
-// response body into out.
+// response body into out. apiVersion is per-endpoint by design even though every
+// current endpoint is v1.0.
+//
+//nolint:unparam // apiVersion is pinned per-endpoint; kept for future non-v1.0 endpoints.
 func (c *Client) getJSON(ctx context.Context, path, apiVersion string, out any) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.endpoint+path, nil)
 	if err != nil {
@@ -137,6 +140,8 @@ func (c *Client) getJSON(ctx context.Context, path, apiVersion string, out any) 
 // JSON-encoded body, and returns the raw response body. The Ceph cluster-user
 // write and export endpoints reply with plain text rather than JSON. okStatuses
 // lists the acceptable response status codes.
+//
+//nolint:unparam // apiVersion is pinned per-endpoint; kept for future non-v1.0 endpoints.
 func (c *Client) doPlainText(ctx context.Context, method, path, apiVersion string, body any, okStatuses ...int) ([]byte, error) {
 	var reader io.Reader
 	if body != nil {
