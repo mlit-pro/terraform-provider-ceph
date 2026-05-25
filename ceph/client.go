@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strings"
 )
 
@@ -130,4 +131,41 @@ func (c *Client) getJSON(ctx context.Context, path, apiVersion string, out any) 
 	}
 
 	return nil
+}
+
+// doPlainText sends method to path at the given API version, optionally with a
+// JSON-encoded body, and returns the raw response body. The Ceph cluster-user
+// write and export endpoints reply with plain text rather than JSON. okStatuses
+// lists the acceptable response status codes.
+func (c *Client) doPlainText(ctx context.Context, method, path, apiVersion string, body any, okStatuses ...int) ([]byte, error) {
+	var reader io.Reader
+	if body != nil {
+		encoded, err := json.Marshal(body)
+		if err != nil {
+			return nil, fmt.Errorf("encoding request for %s: %w", path, err)
+		}
+		reader = bytes.NewReader(encoded)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, method, c.endpoint+path, reader)
+	if err != nil {
+		return nil, fmt.Errorf("building request for %s: %w", path, err)
+	}
+	if body != nil {
+		req.Header.Set("Content-Type", "application/json")
+	}
+
+	resp, err := c.Do(req, apiVersion)
+	if err != nil {
+		return nil, fmt.Errorf("sending request to %s%s: %w", c.endpoint, path, err)
+	}
+	defer resp.Body.Close()
+
+	payload, _ := io.ReadAll(resp.Body)
+
+	if slices.Contains(okStatuses, resp.StatusCode) {
+		return payload, nil
+	}
+
+	return nil, fmt.Errorf("request to %s failed: %s: %s", path, resp.Status, strings.TrimSpace(string(payload)))
 }
