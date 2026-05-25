@@ -1,17 +1,34 @@
 # Terraform Provider for Ceph
 
-A [Terraform](https://www.terraform.io) provider for managing a [Ceph](https://ceph.io) cluster
-through the **Ceph Manager Dashboard REST API**
-(`https://<host>:8443/api`, [docs](https://docs.ceph.com/en/reef/mgr/ceph_api/)).
+A Terraform / OpenTofu provider for managing a [Ceph](https://ceph.io) cluster through the
+[Ceph Manager Dashboard REST API](https://docs.ceph.com/en/latest/mgr/ceph_api/).
 
-> **Status:** scaffold. No real Ceph resources are wired up yet - this repo currently exposes the
-> `ceph_example` placeholder resource, data source, function, action, and ephemeral resource that
-> come from the [terraform-provider-scaffolding-framework](https://github.com/hashicorp/terraform-provider-scaffolding-framework)
-> template. Real Ceph resources (pools, RGW users, RBD images, etc.) will land in follow-up changes.
+## Disclaimer
+
+This project is a personal open-source initiative and is not affiliated with, endorsed by, or
+associated with any of the maintainer's current or former employers. All opinions, code, and
+documentation are solely those of the maintainer and the individual contributors.
+
+The project is not affiliated with the [Ceph project](https://ceph.io) or the
+[Ceph Foundation](https://ceph.io/en/foundation/). The use of the Ceph name and/or logo is for
+informational purposes only and does not imply any endorsement or affiliation with the Ceph project.
+
+## Compatibility Promise
+
+This provider targets the actively maintained Ceph releases: **Squid** (v19) and **Tentacle** (v20).
+These are the only releases we test against and support.
+
+> [!IMPORTANT]
+> Older Ceph releases (Reef and earlier) are not supported. While some functionality might work, we
+> do not test against them, and issues specific to those releases will not be addressed.
+
+While the provider is on version 0.x, it is not guaranteed to be backward compatible with all
+previous minor versions. However, we will try to maintain backward compatibility between provider
+versions as much as possible.
 
 ## Requirements
 
-- [Terraform](https://developer.hashicorp.com/terraform/downloads) >= 1.0
+- Terraform / OpenTofu >= 1.0
 - [Go](https://golang.org/doc/install) >= 1.25
 
 ## Building
