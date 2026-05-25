@@ -23,6 +23,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - CI now runs unit tests on every pull request; acceptance tests moved to a manually-dispatched
   `Acceptance Tests` workflow since they require a live Ceph cluster.
+- The `Tests` workflow no longer runs twice for a push to a branch with an open pull request:
+  `push` is scoped to `master`, and superseded in-progress runs are cancelled.
 
 ### Removed
 
