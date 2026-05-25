@@ -31,10 +31,23 @@ jobs:
         with:
           gpg_private_key: ${{ secrets.GPG_PRIVATE_KEY }}
           passphrase: ${{ secrets.PASSPHRASE }}
+      - name: Strip tag prefix
+        id: version
+        run: echo "number=${GITHUB_REF_NAME#v}" >> "$GITHUB_OUTPUT"
+      - name: Read changelog entry
+        id: changelog
+        uses: mindsers/changelog-reader-action@1faaf50aa09d5793d9a100819973df801febfb31 # v2.4.0
+        with:
+          version: ${{ steps.version.outputs.number }}
+          path: ./CHANGELOG.md
+      - name: Write release notes file
+        env:
+          NOTES: ${{ steps.changelog.outputs.changes }}
+        run: printf '%s\n' "$NOTES" > "${{ runner.temp }}/release-notes.md"
       - name: Run GoReleaser
         uses: goreleaser/goreleaser-action@1a80836c5c9d9e5755a25cb59ec6f45a3b5f41a8 # v7.2.1
         with:
-          args: release --clean
+          args: release --clean --release-notes=${{ runner.temp }}/release-notes.md
         env:
           # GitHub sets the GITHUB_TOKEN secret automatically.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
