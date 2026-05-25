@@ -29,5 +29,6 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 ### Removed
 
 - The scaffolding example resource and data source.
+- The `Lock Threads` workflow (`lock.yml`).
 
 [unreleased]: https://github.com/mlit-pro/terraform-provider-ceph/commits/master
