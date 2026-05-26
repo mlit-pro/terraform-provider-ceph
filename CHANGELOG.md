@@ -6,11 +6,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.1.0] - 2026-05-26
+
 ### Added
 
-- This changelog, following the [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) format.
-- CI enforcement requiring a changelog entry on pull requests.
-- Release notes published from the changelog via GoReleaser.
 - Provider configuration (`endpoint`, `username`, `password`, `ca_cert`, `insecure`) with
   `CEPH_*` environment-variable fallbacks, and a minimal Ceph Manager Dashboard API client
   handling TLS and JWT authentication.
@@ -25,16 +24,5 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   quotas, autoscale mode, and in-place rename; create/update/delete wait for the async pool task.
 - `ceph_pool` and `ceph_pools` data sources for reading Ceph pools.
 
-### Changed
-
-- CI now runs unit tests on every pull request; acceptance tests moved to a manually-dispatched
-  `Acceptance Tests` workflow since they require a live Ceph cluster.
-- The `Tests` workflow no longer runs twice for a push to a branch with an open pull request:
-  `push` is scoped to `master`, and superseded in-progress runs are cancelled.
-
-### Removed
-
-- The scaffolding example resource and data source.
-- The `Lock Threads` workflow (`lock.yml`).
-
-[unreleased]: https://github.com/mlit-pro/terraform-provider-ceph/commits/master
+[unreleased]: https://github.com/mlit-pro/terraform-provider-ceph/compare/v0.1.0...HEAD
+[0.1.0]: https://github.com/mlit-pro/terraform-provider-ceph/releases/tag/v0.1.0

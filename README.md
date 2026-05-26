@@ -28,7 +28,8 @@ versions as much as possible.
 
 ## Requirements
 
-- Terraform / OpenTofu >= 1.0
+- [Terraform](https://developer.hashicorp.com/terraform/install) >= 1.0
+- [OpenTofu](https://opentofu.org/docs/intro/install/) >= 1.6
 - [Go](https://golang.org/doc/install) >= 1.25
 
 ## Building
@@ -52,8 +53,7 @@ After `make install`, point Terraform at the local plugin directory:
 terraform {
   required_providers {
     ceph = {
-      source  = "mlit-pro/ceph"
-      version = "0.0.1"
+      source = "mlit-pro/ceph"
     }
   }
 }
