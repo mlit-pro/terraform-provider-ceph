@@ -128,13 +128,17 @@ func (p *CephProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 }
 
 func (p *CephProvider) Resources(ctx context.Context) []func() resource.Resource {
-	return nil
+	return []func() resource.Resource{
+		NewClusterUserResource,
+	}
 }
 
 func (p *CephProvider) DataSources(ctx context.Context) []func() datasource.DataSource {
 	return []func() datasource.DataSource{
 		NewClusterCapacityDataSource,
 		NewClusterFSIDDataSource,
+		NewClusterUserDataSource,
+		NewClusterUsersDataSource,
 		NewHealthDataSource,
 	}
 }

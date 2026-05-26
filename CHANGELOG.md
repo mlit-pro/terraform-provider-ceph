@@ -18,6 +18,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `ceph_cluster_fsid` data source exposing the cluster's FSID.
 - `ceph_cluster_capacity` data source exposing the cluster's raw capacity
   (total, available, and used bytes).
+- `ceph_cluster_user` resource for managing CephX cluster users (`ceph auth` entities)
+  and their capabilities, exposing the secret `key` and full `keyring`.
+- `ceph_cluster_user` and `ceph_cluster_users` data sources for reading CephX cluster users.
 
 ### Changed
 
