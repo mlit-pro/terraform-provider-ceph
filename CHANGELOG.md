@@ -6,6 +6,11 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+### Added
+
+- `ceph_monitors` data source exposing the cluster's monitors, their addresses,
+  and whether each is currently in quorum.
+
 ## [0.1.0] - 2026-05-26
 
 ### Added
