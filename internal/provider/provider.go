@@ -141,6 +141,7 @@ func (p *CephProvider) DataSources(ctx context.Context) []func() datasource.Data
 		NewClusterUserDataSource,
 		NewClusterUsersDataSource,
 		NewHealthDataSource,
+		NewMonitorsDataSource,
 		NewPoolDataSource,
 		NewPoolsDataSource,
 	}
