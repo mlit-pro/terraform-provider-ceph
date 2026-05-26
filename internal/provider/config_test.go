@@ -12,7 +12,18 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/types"
 )
 
+// clearCephEnv neutralizes any ambient CEPH_* variables (e.g. from a developer's
+// .env) so config tests run against a known-clean environment. t.Setenv restores
+// the originals after the test.
+func clearCephEnv(t *testing.T) {
+	t.Helper()
+	for _, key := range []string{"CEPH_ENDPOINT", "CEPH_USERNAME", "CEPH_PASSWORD", "CEPH_CA_CERT", "CEPH_INSECURE"} {
+		t.Setenv(key, "")
+	}
+}
+
 func TestNewConfigFromEnv(t *testing.T) {
+	clearCephEnv(t)
 	t.Setenv("CEPH_ENDPOINT", "https://env:8443")
 	t.Setenv("CEPH_USERNAME", "env-user")
 	t.Setenv("CEPH_PASSWORD", "env-pass")
@@ -33,6 +44,7 @@ func TestNewConfigFromEnv(t *testing.T) {
 }
 
 func TestNewConfigPrefersConfigOverEnv(t *testing.T) {
+	clearCephEnv(t)
 	t.Setenv("CEPH_ENDPOINT", "https://env:8443")
 	t.Setenv("CEPH_INSECURE", "true")
 

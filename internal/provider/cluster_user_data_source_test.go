@@ -7,22 +7,25 @@
 package provider
 
 import (
+	"fmt"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestAccClusterUserDataSource(t *testing.T) {
 	const addr = "data.ceph_cluster_user.test"
+	entity := acctest.RandomWithPrefix("client.tf-acc")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterUserDataSourceConfig,
+				Config: testAccClusterUserDataSourceConfig(entity),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(addr, "entity", "client.tf-acc-ds"),
+					resource.TestCheckResourceAttr(addr, "entity", entity),
 					resource.TestCheckResourceAttr(addr, "capabilities.mon", "allow r"),
 					resource.TestCheckResourceAttrSet(addr, "key"),
 				),
@@ -31,13 +34,15 @@ func TestAccClusterUserDataSource(t *testing.T) {
 	})
 }
 
-const testAccClusterUserDataSourceConfig = `
+func testAccClusterUserDataSourceConfig(entity string) string {
+	return fmt.Sprintf(`
 resource "ceph_cluster_user" "test" {
-  entity       = "client.tf-acc-ds"
+  entity       = %q
   capabilities = { mon = "allow r" }
 }
 
 data "ceph_cluster_user" "test" {
   entity = ceph_cluster_user.test.entity
 }
-`
+`, entity)
+}

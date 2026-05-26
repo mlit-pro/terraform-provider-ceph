@@ -98,7 +98,7 @@ func TestAuthenticateUnauthorized(t *testing.T) {
 	}
 }
 
-func TestDoSetsAuthAndVersionHeaders(t *testing.T) {
+func TestRequestSetsAuthAndDefaultVersionHeaders(t *testing.T) {
 	var gotAuth, gotAccept string
 	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		gotAuth = r.Header.Get("Authorization")
@@ -113,18 +113,33 @@ func TestDoSetsAuthAndVersionHeaders(t *testing.T) {
 	}
 	c.token = "tok"
 
-	req, err := http.NewRequest(http.MethodGet, srv.URL+"/api/pool", nil)
-	if err != nil {
-		t.Fatalf("NewRequest: %v", err)
+	if _, err := c.Get(context.Background(), "/api/pool", nil); err != nil {
+		t.Fatalf("Get: %v", err)
 	}
-	resp, err := c.Do(req, "v1.1")
-	if err != nil {
-		t.Fatalf("Do: %v", err)
-	}
-	defer resp.Body.Close()
-
 	if gotAuth != "Bearer tok" {
 		t.Errorf("Authorization = %q, want %q", gotAuth, "Bearer tok")
+	}
+	if gotAccept != "application/vnd.ceph.api.v1.0+json" {
+		t.Errorf("Accept = %q, want %q (default version)", gotAccept, "application/vnd.ceph.api.v1.0+json")
+	}
+}
+
+func TestRequestWithAPIVersionOverride(t *testing.T) {
+	var gotAccept string
+	srv := httptest.NewTLSServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotAccept = r.Header.Get("Accept")
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer srv.Close()
+
+	c, err := New(srv.URL, "u", "p", caCertPEM(t, srv), false)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+	c.token = "tok"
+
+	if _, err := c.Get(context.Background(), "/api/pool", nil, WithAPIVersion("v1.1")); err != nil {
+		t.Fatalf("Get: %v", err)
 	}
 	if gotAccept != "application/vnd.ceph.api.v1.1+json" {
 		t.Errorf("Accept = %q, want %q", gotAccept, "application/vnd.ceph.api.v1.1+json")

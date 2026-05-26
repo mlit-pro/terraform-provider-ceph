@@ -8,8 +8,6 @@ package ceph
 
 import (
 	"context"
-	"encoding/json"
-	"net/http"
 	"net/url"
 	"strings"
 )
@@ -39,24 +37,24 @@ func capabilitiesFromMap(caps map[string]string) []userCapability {
 // GetClusterUsers returns all CephX cluster users from GET /api/cluster/user.
 func (c *Client) GetClusterUsers(ctx context.Context) ([]ClusterUser, error) {
 	var out []ClusterUser
-	err := c.getJSON(ctx, "/api/cluster/user", "v1.0", &out)
+	_, err := c.Get(ctx, "/api/cluster/user", &out)
 	return out, err
 }
 
 // GetClusterUser returns a single cluster user by entity. The API has no
-// single-user endpoint, so it lists all users and filters. The bool reports
-// whether the entity was found.
-func (c *Client) GetClusterUser(ctx context.Context, entity string) (ClusterUser, bool, error) {
+// single-user endpoint, so it lists all users and filters. It returns
+// ErrNotFound when the entity does not exist.
+func (c *Client) GetClusterUser(ctx context.Context, entity string) (ClusterUser, error) {
 	users, err := c.GetClusterUsers(ctx)
 	if err != nil {
-		return ClusterUser{}, false, err
+		return ClusterUser{}, err
 	}
 	for _, u := range users {
 		if u.Entity == entity {
-			return u, true, nil
+			return u, nil
 		}
 	}
-	return ClusterUser{}, false, nil
+	return ClusterUser{}, ErrNotFound
 }
 
 // CreateClusterUser creates a CephX user via POST /api/cluster/user.
@@ -65,7 +63,7 @@ func (c *Client) CreateClusterUser(ctx context.Context, entity string, caps map[
 		"user_entity":  entity,
 		"capabilities": capabilitiesFromMap(caps),
 	}
-	_, err := c.doPlainText(ctx, http.MethodPost, "/api/cluster/user", "v1.0", body, http.StatusCreated)
+	_, err := c.Post(ctx, "/api/cluster/user", body, nil)
 	return err
 }
 
@@ -76,31 +74,25 @@ func (c *Client) UpdateClusterUser(ctx context.Context, entity string, caps map[
 		"user_entity":  entity,
 		"capabilities": capabilitiesFromMap(caps),
 	}
-	_, err := c.doPlainText(ctx, http.MethodPut, "/api/cluster/user", "v1.0", body, http.StatusOK)
+	_, err := c.Put(ctx, "/api/cluster/user", body, nil)
 	return err
 }
 
 // DeleteClusterUser deletes a CephX user via DELETE /api/cluster/user/{entity}.
 func (c *Client) DeleteClusterUser(ctx context.Context, entity string) error {
 	path := "/api/cluster/user/" + url.PathEscape(entity)
-	_, err := c.doPlainText(ctx, http.MethodDelete, path, "v1.0", nil, http.StatusNoContent, http.StatusOK)
+	_, err := c.Delete(ctx, path, nil)
 	return err
 }
 
 // ExportClusterUsers returns the keyring text (including secret keys) for the
-// given entities via POST /api/cluster/user/export.
+// given entities via POST /api/cluster/user/export. The endpoint replies with a
+// JSON string literal containing the keyring.
 func (c *Client) ExportClusterUsers(ctx context.Context, entities []string) (string, error) {
 	body := map[string]any{"entities": entities}
-	payload, err := c.doPlainText(ctx, http.MethodPost, "/api/cluster/user/export", "v1.0", body, http.StatusOK)
-	if err != nil {
-		return "", err
-	}
-	// The export endpoint returns a JSON string literal containing the keyring.
 	var keyring string
-	if json.Unmarshal(payload, &keyring) == nil {
-		return keyring, nil
-	}
-	return string(payload), nil
+	_, err := c.Post(ctx, "/api/cluster/user/export", body, &keyring)
+	return keyring, err
 }
 
 // parseKeyringSecret returns the value of the first `key = ...` line in a
