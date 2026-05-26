@@ -10,20 +10,22 @@ import (
 	"fmt"
 	"testing"
 
+	"github.com/hashicorp/terraform-plugin-testing/helper/acctest"
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
 func TestAccClusterUserResource(t *testing.T) {
 	const addr = "ceph_cluster_user.test"
+	entity := acctest.RandomWithPrefix("client.tf-acc")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterUserResourceConfig(`{ mon = "allow r" }`),
+				Config: testAccClusterUserResourceConfig(entity, `{ mon = "allow r" }`),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttr(addr, "entity", "client.tf-acc-test"),
+					resource.TestCheckResourceAttr(addr, "entity", entity),
 					resource.TestCheckResourceAttr(addr, "capabilities.mon", "allow r"),
 					resource.TestCheckResourceAttrSet(addr, "key"),
 					resource.TestCheckResourceAttrSet(addr, "keyring"),
@@ -32,13 +34,13 @@ func TestAccClusterUserResource(t *testing.T) {
 			{
 				ResourceName:                         addr,
 				ImportState:                          true,
-				ImportStateId:                        "client.tf-acc-test",
+				ImportStateId:                        entity,
 				ImportStateVerify:                    true,
 				ImportStateVerifyIdentifierAttribute: "entity",
 				ImportStateVerifyIgnore:              []string{"keyring"},
 			},
 			{
-				Config: testAccClusterUserResourceConfig(`{ mon = "allow r", osd = "allow rwx pool=rbd" }`),
+				Config: testAccClusterUserResourceConfig(entity, `{ mon = "allow r", osd = "allow rwx pool=rbd" }`),
 				Check: resource.ComposeAggregateTestCheckFunc(
 					resource.TestCheckResourceAttr(addr, "capabilities.mon", "allow r"),
 					resource.TestCheckResourceAttr(addr, "capabilities.osd", "allow rwx pool=rbd"),
@@ -48,11 +50,11 @@ func TestAccClusterUserResource(t *testing.T) {
 	})
 }
 
-func testAccClusterUserResourceConfig(capabilities string) string {
+func testAccClusterUserResourceConfig(entity, capabilities string) string {
 	return fmt.Sprintf(`
 resource "ceph_cluster_user" "test" {
-  entity       = "client.tf-acc-test"
+  entity       = %q
   capabilities = %s
 }
-`, capabilities)
+`, entity, capabilities)
 }

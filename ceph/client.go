@@ -5,8 +5,8 @@
  */
 
 // Package ceph is a minimal REST client for the Ceph Manager Dashboard API.
-// It owns TLS configuration and JWT authentication; per-endpoint API versioning is
-// the caller's responsibility (see Do).
+// It owns TLS configuration and JWT authentication. Requests go through the
+// Get/Post/Put/Delete helpers; every endpoint in use is API v1.0 (see apiVersion).
 package ceph
 
 import (
@@ -15,12 +15,20 @@ import (
 	"crypto/tls"
 	"crypto/x509"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
 	"slices"
 	"strings"
 )
+
+// apiVersion is the Ceph Dashboard API version negotiated via the Accept header.
+const apiVersion = "v1.0"
+
+// ErrNotFound is returned by the Get* lookups when the requested resource does
+// not exist. Callers can test for it with errors.Is.
+var ErrNotFound = errors.New("ceph: resource not found")
 
 // Client talks to a single Ceph Manager Dashboard endpoint.
 type Client struct {
@@ -72,7 +80,7 @@ func (c *Client) Authenticate(ctx context.Context) error {
 		return fmt.Errorf("building auth request: %w", err)
 	}
 	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Accept", "application/vnd.ceph.api.v1.0+json")
+	req.Header.Set("Accept", "application/vnd.ceph.api."+apiVersion+"+json")
 
 	resp, err := c.http.Do(req)
 	if err != nil {
@@ -99,78 +107,102 @@ func (c *Client) Authenticate(ctx context.Context) error {
 	return nil
 }
 
-// Do sends req with the stored bearer token and the per-endpoint Accept header.
-// apiVersion is the endpoint's required version, e.g. "v1.0" or "v1.1".
-func (c *Client) Do(req *http.Request, apiVersion string) (*http.Response, error) {
-	req.Header.Set("Authorization", "Bearer "+c.token)
-	req.Header.Set("Accept", fmt.Sprintf("application/vnd.ceph.api.%s+json", apiVersion))
-	return c.http.Do(req)
+// RequestOption configures a request issued by Get/Post/Put/Delete.
+type RequestOption func(*requestOptions)
+
+type requestOptions struct {
+	apiVersion string
+	okStatuses []int
 }
 
-// getJSON performs a GET against path at the given API version and decodes a 200
-// response body into out. apiVersion is per-endpoint by design even though every
-// current endpoint is v1.0.
-//
-//nolint:unparam // apiVersion is pinned per-endpoint; kept for future non-v1.0 endpoints.
-func (c *Client) getJSON(ctx context.Context, path, apiVersion string, out any) error {
-	req, err := http.NewRequestWithContext(ctx, http.MethodGet, c.endpoint+path, nil)
-	if err != nil {
-		return fmt.Errorf("building request for %s: %w", path, err)
-	}
-
-	resp, err := c.Do(req, apiVersion)
-	if err != nil {
-		return fmt.Errorf("sending request to %s%s: %w", c.endpoint, path, err)
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK {
-		snippet, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
-		return fmt.Errorf("request to %s failed: %s: %s", path, resp.Status, strings.TrimSpace(string(snippet)))
-	}
-
-	if err := json.NewDecoder(resp.Body).Decode(out); err != nil {
-		return fmt.Errorf("decoding response from %s: %w", path, err)
-	}
-
-	return nil
+// WithAPIVersion overrides the API version (default "v1.0") used for a request's
+// Accept header, supporting per-endpoint versioning.
+func WithAPIVersion(version string) RequestOption {
+	return func(o *requestOptions) { o.apiVersion = version }
 }
 
-// doPlainText sends method to path at the given API version, optionally with a
-// JSON-encoded body, and returns the raw response body. The Ceph cluster-user
-// write and export endpoints reply with plain text rather than JSON. okStatuses
-// lists the acceptable response status codes.
-//
-//nolint:unparam // apiVersion is pinned per-endpoint; kept for future non-v1.0 endpoints.
-func (c *Client) doPlainText(ctx context.Context, method, path, apiVersion string, body any, okStatuses ...int) ([]byte, error) {
+// WithStatuses restricts the response status codes treated as success. By
+// default any 2xx is accepted.
+func WithStatuses(statuses ...int) RequestOption {
+	return func(o *requestOptions) { o.okStatuses = statuses }
+}
+
+// Get issues a GET, decoding a JSON response body into out when out is non-nil.
+func (c *Client) Get(ctx context.Context, path string, out any, opts ...RequestOption) (int, error) {
+	return c.do(ctx, http.MethodGet, path, nil, out, opts)
+}
+
+// Post issues a POST with a JSON body, decoding a JSON response into out when non-nil.
+func (c *Client) Post(ctx context.Context, path string, body, out any, opts ...RequestOption) (int, error) {
+	return c.do(ctx, http.MethodPost, path, body, out, opts)
+}
+
+// Put issues a PUT with a JSON body, decoding a JSON response into out when non-nil.
+func (c *Client) Put(ctx context.Context, path string, body, out any, opts ...RequestOption) (int, error) {
+	return c.do(ctx, http.MethodPut, path, body, out, opts)
+}
+
+// Delete issues a DELETE, decoding a JSON response into out when non-nil.
+func (c *Client) Delete(ctx context.Context, path string, out any, opts ...RequestOption) (int, error) {
+	return c.do(ctx, http.MethodDelete, path, nil, out, opts)
+}
+
+// do builds, sends, and reads a request. The API version defaults to apiVersion
+// and the body is JSON-encoded when non-nil. The status must be in the request's
+// okStatuses, or any 2xx when none are given; otherwise an error is returned.
+// When out is non-nil and the status is acceptable, the JSON body is decoded into
+// it. The status code is always returned (e.g. to distinguish 202).
+func (c *Client) do(ctx context.Context, method, path string, body, out any, opts []RequestOption) (int, error) {
+	cfg := requestOptions{apiVersion: apiVersion}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+
 	var reader io.Reader
 	if body != nil {
 		encoded, err := json.Marshal(body)
 		if err != nil {
-			return nil, fmt.Errorf("encoding request for %s: %w", path, err)
+			return 0, fmt.Errorf("encoding request for %s: %w", path, err)
 		}
 		reader = bytes.NewReader(encoded)
 	}
 
 	req, err := http.NewRequestWithContext(ctx, method, c.endpoint+path, reader)
 	if err != nil {
-		return nil, fmt.Errorf("building request for %s: %w", path, err)
+		return 0, fmt.Errorf("building request for %s: %w", path, err)
 	}
+	req.Header.Set("Authorization", "Bearer "+c.token)
+	req.Header.Set("Accept", "application/vnd.ceph.api."+cfg.apiVersion+"+json")
 	if body != nil {
 		req.Header.Set("Content-Type", "application/json")
 	}
 
-	resp, err := c.Do(req, apiVersion)
+	resp, err := c.http.Do(req)
 	if err != nil {
-		return nil, fmt.Errorf("sending request to %s%s: %w", c.endpoint, path, err)
+		return 0, fmt.Errorf("sending request to %s%s: %w", c.endpoint, path, err)
 	}
 	defer resp.Body.Close()
 
 	payload, _ := io.ReadAll(resp.Body)
 
-	if slices.Contains(okStatuses, resp.StatusCode) {
-		return payload, nil
+	if !statusAccepted(resp.StatusCode, cfg.okStatuses) {
+		return resp.StatusCode, fmt.Errorf("request to %s failed: %d: %s", path, resp.StatusCode, strings.TrimSpace(string(payload)))
 	}
 
-	return nil, fmt.Errorf("request to %s failed: %s: %s", path, resp.Status, strings.TrimSpace(string(payload)))
+	if out != nil {
+		if err := json.Unmarshal(payload, out); err != nil {
+			return resp.StatusCode, fmt.Errorf("decoding response from %s: %w", path, err)
+		}
+	}
+
+	return resp.StatusCode, nil
+}
+
+// statusAccepted reports whether status is allowed: a member of okStatuses, or
+// any 2xx when okStatuses is empty.
+func statusAccepted(status int, okStatuses []int) bool {
+	if len(okStatuses) == 0 {
+		return status >= 200 && status < 300
+	}
+	return slices.Contains(okStatuses, status)
 }

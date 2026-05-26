@@ -26,14 +26,14 @@ type ClusterCapacity struct {
 // GET /api/health/minimal.
 func (c *Client) GetHealthMinimal(ctx context.Context) (HealthMinimal, error) {
 	var out HealthMinimal
-	err := c.getJSON(ctx, "/api/health/minimal", "v1.0", &out)
+	_, err := c.Get(ctx, "/api/health/minimal", &out)
 	return out, err
 }
 
 // GetClusterFSID returns the cluster's FSID from GET /api/health/get_cluster_fsid.
 func (c *Client) GetClusterFSID(ctx context.Context) (string, error) {
 	var fsid string
-	err := c.getJSON(ctx, "/api/health/get_cluster_fsid", "v1.0", &fsid)
+	_, err := c.Get(ctx, "/api/health/get_cluster_fsid", &fsid)
 	return fsid, err
 }
 
@@ -41,6 +41,6 @@ func (c *Client) GetClusterFSID(ctx context.Context) (string, error) {
 // GET /api/health/get_cluster_capacity.
 func (c *Client) GetClusterCapacity(ctx context.Context) (ClusterCapacity, error) {
 	var out ClusterCapacity
-	err := c.getJSON(ctx, "/api/health/get_cluster_capacity", "v1.0", &out)
+	_, err := c.Get(ctx, "/api/health/get_cluster_capacity", &out)
 	return out, err
 }

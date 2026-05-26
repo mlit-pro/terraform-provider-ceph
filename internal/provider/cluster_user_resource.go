@@ -8,6 +8,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/diag"
@@ -135,13 +136,13 @@ func (r *ClusterUserResource) Read(ctx context.Context, req resource.ReadRequest
 	}
 
 	entity := data.Entity.ValueString()
-	user, found, err := r.client.GetClusterUser(ctx, entity)
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read cluster user %q, got error: %s", entity, err))
+	user, err := r.client.GetClusterUser(ctx, entity)
+	if errors.Is(err, ceph.ErrNotFound) {
+		resp.State.RemoveResource(ctx)
 		return
 	}
-	if !found {
-		resp.State.RemoveResource(ctx)
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read cluster user %q, got error: %s", entity, err))
 		return
 	}
 

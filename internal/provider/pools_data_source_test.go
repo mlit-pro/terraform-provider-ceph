@@ -16,50 +16,53 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/terraform"
 )
 
-func TestAccClusterUsersDataSource(t *testing.T) {
-	const addr = "data.ceph_cluster_users.all"
-	entity := acctest.RandomWithPrefix("client.tf-acc")
+func TestAccPoolsDataSource(t *testing.T) {
+	const addr = "data.ceph_pools.all"
+	name := acctest.RandomWithPrefix("tf-acc-pool")
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: testAccClusterUsersDataSourceConfig(entity),
+				Config: testAccPoolsDataSourceConfig(name),
 				Check: resource.ComposeAggregateTestCheckFunc(
-					testAccCheckUserInList(addr, entity),
+					testAccCheckPoolInList(addr, name),
 				),
 			},
 		},
 	})
 }
 
-// testAccCheckUserInList asserts that an entity appears in the users list of a
-// ceph_cluster_users data source.
-func testAccCheckUserInList(addr, entity string) resource.TestCheckFunc {
+// testAccCheckPoolInList asserts that a pool name appears in the pools list of a
+// ceph_pools data source.
+func testAccCheckPoolInList(addr, name string) resource.TestCheckFunc {
 	return func(s *terraform.State) error {
 		rs, ok := s.RootModule().Resources[addr]
 		if !ok {
 			return fmt.Errorf("%s not found in state", addr)
 		}
 		for k, v := range rs.Primary.Attributes {
-			if strings.HasSuffix(k, ".entity") && v == entity {
+			if strings.HasSuffix(k, ".name") && v == name {
 				return nil
 			}
 		}
-		return fmt.Errorf("entity %q not found in %s users list", entity, addr)
+		return fmt.Errorf("pool %q not found in %s pools list", name, addr)
 	}
 }
 
-func testAccClusterUsersDataSourceConfig(entity string) string {
+func testAccPoolsDataSourceConfig(name string) string {
 	return fmt.Sprintf(`
-resource "ceph_cluster_user" "test" {
-  entity       = %q
-  capabilities = { mon = "allow r" }
+resource "ceph_pool" "test" {
+  name                 = %q
+  pool_type            = "replicated"
+  pg_num               = 8
+  application_metadata = ["rbd"]
+  pg_autoscale_mode    = "off"
 }
 
-data "ceph_cluster_users" "all" {
-  depends_on = [ceph_cluster_user.test]
+data "ceph_pools" "all" {
+  depends_on = [ceph_pool.test]
 }
-`, entity)
+`, name)
 }

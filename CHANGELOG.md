@@ -21,6 +21,9 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 - `ceph_cluster_user` resource for managing CephX cluster users (`ceph auth` entities)
   and their capabilities, exposing the secret `key` and full `keyring`.
 - `ceph_cluster_user` and `ceph_cluster_users` data sources for reading CephX cluster users.
+- `ceph_pool` resource for managing Ceph pools (replicated and erasure), including capabilities,
+  quotas, autoscale mode, and in-place rename; create/update/delete wait for the async pool task.
+- `ceph_pool` and `ceph_pools` data sources for reading Ceph pools.
 
 ### Changed
 

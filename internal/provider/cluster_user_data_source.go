@@ -8,6 +8,7 @@ package provider
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/hashicorp/terraform-plugin-framework/datasource"
@@ -94,13 +95,13 @@ func (d *ClusterUserDataSource) Read(ctx context.Context, req datasource.ReadReq
 	}
 
 	entity := data.Entity.ValueString()
-	user, found, err := d.client.GetClusterUser(ctx, entity)
-	if err != nil {
-		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read cluster user %q, got error: %s", entity, err))
+	user, err := d.client.GetClusterUser(ctx, entity)
+	if errors.Is(err, ceph.ErrNotFound) {
+		resp.Diagnostics.AddError("Cluster user not found", fmt.Sprintf("No CephX user with entity %q exists.", entity))
 		return
 	}
-	if !found {
-		resp.Diagnostics.AddError("Cluster user not found", fmt.Sprintf("No CephX user with entity %q exists.", entity))
+	if err != nil {
+		resp.Diagnostics.AddError("Client Error", fmt.Sprintf("Unable to read cluster user %q, got error: %s", entity, err))
 		return
 	}
 
