@@ -50,11 +50,13 @@ func (r *ClusterUserResource) Metadata(ctx context.Context, req resource.Metadat
 
 func (r *ClusterUserResource) Schema(ctx context.Context, req resource.SchemaRequest, resp *resource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Manages a CephX cluster user (a `ceph auth` entity) and its capabilities.",
+		Description:         "Manages a CephX cluster user (a ceph auth entity) and its capabilities.",
+		MarkdownDescription: "Manages a CephX cluster user (a `ceph auth` entity) and its capabilities.",
 		Attributes: map[string]schema.Attribute{
 			"entity": schema.StringAttribute{
-				Description: "CephX entity name, e.g. `client.terraform`. Changing this forces a new user.",
-				Required:    true,
+				Description:         "CephX entity name, e.g. client.terraform. Changing this forces a new user.",
+				MarkdownDescription: "CephX entity name, e.g. `client.terraform`. Changing this forces a new user.",
+				Required:            true,
 				PlanModifiers: []planmodifier.String{
 					stringplanmodifier.RequiresReplace(),
 				},

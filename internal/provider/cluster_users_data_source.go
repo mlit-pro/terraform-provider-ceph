@@ -46,7 +46,8 @@ func (d *ClusterUsersDataSource) Metadata(ctx context.Context, req datasource.Me
 
 func (d *ClusterUsersDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Lists all CephX cluster users (`ceph auth` entities). Secret keys are not included.",
+		Description:         "Lists all CephX cluster users (ceph auth entities). Secret keys are not included.",
+		MarkdownDescription: "Lists all CephX cluster users (`ceph auth` entities). Secret keys are not included.",
 		Attributes: map[string]schema.Attribute{
 			"users": schema.ListNestedAttribute{
 				Description: "All CephX cluster users.",

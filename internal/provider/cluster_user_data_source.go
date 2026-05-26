@@ -42,11 +42,13 @@ func (d *ClusterUserDataSource) Metadata(ctx context.Context, req datasource.Met
 
 func (d *ClusterUserDataSource) Schema(ctx context.Context, req datasource.SchemaRequest, resp *datasource.SchemaResponse) {
 	resp.Schema = schema.Schema{
-		Description: "Reads a CephX cluster user (a `ceph auth` entity) by entity name.",
+		Description:         "Reads a CephX cluster user (a ceph auth entity) by entity name.",
+		MarkdownDescription: "Reads a CephX cluster user (a `ceph auth` entity) by entity name.",
 		Attributes: map[string]schema.Attribute{
 			"entity": schema.StringAttribute{
-				Description: "CephX entity name to look up, e.g. `client.admin`.",
-				Required:    true,
+				Description:         "CephX entity name to look up, e.g. client.admin.",
+				MarkdownDescription: "CephX entity name to look up, e.g. `client.admin`.",
+				Required:            true,
 			},
 			"capabilities": schema.MapAttribute{
 				Description: "Capabilities keyed by daemon type.",
