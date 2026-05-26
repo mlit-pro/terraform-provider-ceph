@@ -10,6 +10,10 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 - `ceph_monitors` data source exposing the cluster's monitors, their addresses,
   and whether each is currently in quorum.
+- `ceph_user` resource and `ceph_user` / `ceph_users` data sources for managing
+  Ceph Dashboard user accounts (RBAC), including roles and enablement.
+- `ceph_role` resource and `ceph_role` / `ceph_roles` data sources for managing
+  custom Ceph Dashboard RBAC roles and their scope permissions.
 
 ## [0.1.0] - 2026-05-26
 

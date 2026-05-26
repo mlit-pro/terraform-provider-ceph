@@ -131,6 +131,8 @@ func (p *CephProvider) Resources(ctx context.Context) []func() resource.Resource
 	return []func() resource.Resource{
 		NewClusterUserResource,
 		NewPoolResource,
+		NewRoleResource,
+		NewUserResource,
 	}
 }
 
@@ -144,6 +146,10 @@ func (p *CephProvider) DataSources(ctx context.Context) []func() datasource.Data
 		NewMonitorsDataSource,
 		NewPoolDataSource,
 		NewPoolsDataSource,
+		NewRoleDataSource,
+		NewRolesDataSource,
+		NewUserDataSource,
+		NewUsersDataSource,
 	}
 }
 

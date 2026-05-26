@@ -23,6 +23,16 @@ func Int64Ptr(v types.Int64) *int64 {
 	return &x
 }
 
+// NullableString maps an empty string to a null attribute value, so optional
+// string attributes round-trip with a null configuration. A non-empty string
+// becomes a known value.
+func NullableString(s string) types.String {
+	if s == "" {
+		return types.StringNull()
+	}
+	return types.StringValue(s)
+}
+
 // StringPtr returns a pointer to the attribute's value, or nil when it is null or
 // unknown.
 func StringPtr(v types.String) *string {
