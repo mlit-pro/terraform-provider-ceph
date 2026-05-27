@@ -12,20 +12,19 @@ import (
 	"github.com/hashicorp/terraform-plugin-testing/helper/resource"
 )
 
-func TestAccMonitorsDataSource(t *testing.T) {
-	const addr = "data.ceph_monitors.all"
+func TestAccRoleDataSource(t *testing.T) {
+	const addr = "data.ceph_role.administrator"
 
 	resource.Test(t, resource.TestCase{
 		PreCheck:                 func() { testAccPreCheck(t) },
 		ProtoV6ProviderFactories: testAccProtoV6ProviderFactories,
 		Steps: []resource.TestStep{
 			{
-				Config: `data "ceph_monitors" "all" {}`,
+				Config: `data "ceph_role" "administrator" { name = "administrator" }`,
 				Check: resource.ComposeAggregateTestCheckFunc(
-					resource.TestCheckResourceAttrWith(addr, "monitors.#", atLeastOne),
-					resource.TestCheckResourceAttrSet(addr, "monitors.0.name"),
-					resource.TestCheckResourceAttrSet(addr, "monitors.0.public_addr"),
-					resource.TestCheckResourceAttrSet(addr, "monitors.0.in_quorum"),
+					resource.TestCheckResourceAttr(addr, "name", "administrator"),
+					resource.TestCheckResourceAttr(addr, "system", "true"),
+					resource.TestCheckResourceAttrWith(addr, "scopes_permissions.%", atLeastOne),
 				),
 			},
 		},
