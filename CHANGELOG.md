@@ -6,6 +6,8 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-05-27
+
 ### Added
 
 - `ceph_monitors` data source exposing the cluster's monitors, their addresses,
@@ -33,5 +35,6 @@ to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
   quotas, autoscale mode, and in-place rename; create/update/delete wait for the async pool task.
 - `ceph_pool` and `ceph_pools` data sources for reading Ceph pools.
 
-[unreleased]: https://github.com/mlit-pro/terraform-provider-ceph/compare/v0.1.0...HEAD
+[unreleased]: https://github.com/mlit-pro/terraform-provider-ceph/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/mlit-pro/terraform-provider-ceph/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/mlit-pro/terraform-provider-ceph/releases/tag/v0.1.0
