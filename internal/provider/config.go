@@ -19,6 +19,7 @@ type config struct {
 	password string
 	caCert   string
 	insecure bool
+	proxy    string
 }
 
 // newConfig builds a config from the provider model, falling back to CEPH_* environment
@@ -30,6 +31,7 @@ func newConfig(data CephProviderModel) config {
 		password: utils.StringOrEnv(data.Password, "CEPH_PASSWORD"),
 		caCert:   utils.StringOrEnv(data.CACert, "CEPH_CA_CERT"),
 		insecure: utils.BoolOrEnv(data.Insecure, "CEPH_INSECURE"),
+		proxy:    utils.StringOrEnv(data.Proxy, "CEPH_PROXY"),
 	}
 }
 
