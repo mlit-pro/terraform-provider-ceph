@@ -28,8 +28,8 @@ type userCapability struct {
 
 func capabilitiesFromMap(caps map[string]string) []userCapability {
 	out := make([]userCapability, 0, len(caps))
-	for entity, cap := range caps {
-		out = append(out, userCapability{Entity: entity, Cap: cap})
+	for entity, capability := range caps {
+		out = append(out, userCapability{Entity: entity, Cap: capability})
 	}
 	return out
 }
