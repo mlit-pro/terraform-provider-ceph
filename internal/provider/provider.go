@@ -15,7 +15,6 @@ import (
 	"github.com/hashicorp/terraform-plugin-framework/provider/schema"
 	"github.com/hashicorp/terraform-plugin-framework/resource"
 	"github.com/hashicorp/terraform-plugin-framework/types"
-
 	"github.com/mlit-pro/terraform-provider-ceph/ceph"
 )
 
@@ -36,6 +35,7 @@ type CephProviderModel struct {
 	Password types.String `tfsdk:"password"`
 	CACert   types.String `tfsdk:"ca_cert"`
 	Insecure types.Bool   `tfsdk:"insecure"`
+	Proxy    types.String `tfsdk:"proxy"`
 }
 
 func (p *CephProvider) Metadata(ctx context.Context, req provider.MetadataRequest, resp *provider.MetadataResponse) {
@@ -71,6 +71,11 @@ func (p *CephProvider) Schema(ctx context.Context, req provider.SchemaRequest, r
 			"insecure": schema.BoolAttribute{
 				Description:         "Skip TLS certificate verification.",
 				MarkdownDescription: "Skip TLS certificate verification. Intended for development against self-signed certificates; mutually exclusive with `ca_cert`. May also be set with the `CEPH_INSECURE` environment variable. Defaults to `false`.",
+				Optional:            true,
+			},
+			"proxy": schema.StringAttribute{
+				Description:         "Proxy URL for connecting to the Ceph Dashboard.",
+				MarkdownDescription: "Proxy URL for connecting to the Ceph Dashboard. Supports HTTP, HTTPS, and SOCKS5 proxies, e.g. `http://proxy.example.com:8080`, `socks5://proxy.example.com:1080`. May also be set with the `CEPH_PROXY` environment variable.",
 				Optional:            true,
 			},
 		},
@@ -116,6 +121,13 @@ func (p *CephProvider) Configure(ctx context.Context, req provider.ConfigureRequ
 	if err != nil {
 		resp.Diagnostics.AddError("Unable to create Ceph client", err.Error())
 		return
+	}
+
+	if cfg.proxy != "" {
+		if err := client.SetProxy(cfg.proxy); err != nil {
+			resp.Diagnostics.AddError("Unable to configure proxy", err.Error())
+			return
+		}
 	}
 
 	if err := client.Authenticate(ctx); err != nil {

@@ -19,6 +19,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"net/url"
 	"slices"
 	"strings"
 )
@@ -63,6 +64,23 @@ func New(endpoint, username, password, caCertPEM string, insecure bool) (*Client
 			Transport: &http.Transport{TLSClientConfig: tlsConfig},
 		},
 	}, nil
+}
+
+// SetProxy configures an HTTP proxy for the client's transport.
+func (c *Client) SetProxy(proxyURL string) error {
+	if proxyURL == "" {
+		return nil
+	}
+	proxy, err := url.Parse(proxyURL)
+	if err != nil {
+		return fmt.Errorf("proxy: invalid URL: %w", err)
+	}
+	tr, ok := c.http.Transport.(*http.Transport)
+	if !ok {
+		return fmt.Errorf("proxy: transport is not *http.Transport")
+	}
+	tr.Proxy = http.ProxyURL(proxy)
+	return nil
 }
 
 // Authenticate exchanges username/password for a JWT via POST /api/auth and stores it.

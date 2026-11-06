@@ -145,3 +145,113 @@ func TestRequestWithAPIVersionOverride(t *testing.T) {
 		t.Errorf("Accept = %q, want %q", gotAccept, "application/vnd.ceph.api.v1.1+json")
 	}
 }
+
+func TestSetProxyHTTP(t *testing.T) {
+	c, err := New("https://ceph:8443", "u", "p", "", true)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	if err := c.SetProxy("http://proxy.example.com:8080"); err != nil {
+		t.Fatalf("SetProxy: %v", err)
+	}
+
+	tr, ok := c.http.Transport.(*http.Transport)
+	if !ok {
+		t.Fatalf("expected *http.Transport, got %T", c.http.Transport)
+	}
+
+	req, _ := http.NewRequest(http.MethodGet, "https://ceph:8443/test", nil)
+	proxyURL, err := tr.Proxy(req)
+	if err != nil {
+		t.Fatalf("Proxy func error: %v", err)
+	}
+	if proxyURL == nil {
+		t.Fatal("expected proxy URL, got nil")
+	}
+	if proxyURL.String() != "http://proxy.example.com:8080" {
+		t.Errorf("proxy URL = %q, want %q", proxyURL.String(), "http://proxy.example.com:8080")
+	}
+}
+
+func TestSetProxySOCKS5(t *testing.T) {
+	c, err := New("https://ceph:8443", "u", "p", "", true)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	if err := c.SetProxy("socks5://proxy.example.com:1080"); err != nil {
+		t.Fatalf("SetProxy: %v", err)
+	}
+
+	tr, ok := c.http.Transport.(*http.Transport)
+	if !ok {
+		t.Fatalf("expected *http.Transport, got %T", c.http.Transport)
+	}
+
+	req, _ := http.NewRequest(http.MethodGet, "https://ceph:8443/test", nil)
+	proxyURL, err := tr.Proxy(req)
+	if err != nil {
+		t.Fatalf("Proxy func error: %v", err)
+	}
+	if proxyURL == nil {
+		t.Fatal("expected proxy URL, got nil")
+	}
+	if proxyURL.String() != "socks5://proxy.example.com:1080" {
+		t.Errorf("proxy URL = %q, want %q", proxyURL.String(), "socks5://proxy.example.com:1080")
+	}
+}
+
+func TestSetProxyInvalidURL(t *testing.T) {
+	c, err := New("https://ceph:8443", "u", "p", "", true)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	err = c.SetProxy("://invalid")
+	if err == nil {
+		t.Fatal("expected error for invalid proxy URL, got nil")
+	}
+	if !strings.Contains(err.Error(), "invalid URL") {
+		t.Errorf("error %q does not mention invalid URL", err.Error())
+	}
+}
+
+func TestSetProxyEmptyString(t *testing.T) {
+	c, err := New("https://ceph:8443", "u", "p", "", true)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	if err := c.SetProxy(""); err != nil {
+		t.Fatalf("SetProxy with empty string: %v", err)
+	}
+}
+
+func TestSetProxyHTTPS(t *testing.T) {
+	c, err := New("https://ceph:8443", "u", "p", "", true)
+	if err != nil {
+		t.Fatalf("New: %v", err)
+	}
+
+	if err := c.SetProxy("https://proxy.example.com:8443"); err != nil {
+		t.Fatalf("SetProxy: %v", err)
+	}
+
+	tr, ok := c.http.Transport.(*http.Transport)
+	if !ok {
+		t.Fatalf("expected *http.Transport, got %T", c.http.Transport)
+	}
+
+	req, _ := http.NewRequest(http.MethodGet, "https://ceph:8443/test", nil)
+	proxyURL, err := tr.Proxy(req)
+	if err != nil {
+		t.Fatalf("Proxy func error: %v", err)
+	}
+	if proxyURL == nil {
+		t.Fatal("expected proxy URL, got nil")
+	}
+	if proxyURL.String() != "https://proxy.example.com:8443" {
+		t.Errorf("proxy URL = %q, want %q", proxyURL.String(), "https://proxy.example.com:8443")
+	}
+}
